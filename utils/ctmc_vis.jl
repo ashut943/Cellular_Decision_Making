@@ -45,9 +45,10 @@ function plot_Q_with_colored_yticks(Q::Matrix, N::Int, special_ticks::Vector{Int
     for i in special_ticks
         annotate!(p, 0.5, i, text("T", :red, 12, :right))
     end
-    
+    display(p)
     if save_plots
         savefig(p, filename * ".png")
         savefig(p, filename * ".svg")
     end
+    
 end

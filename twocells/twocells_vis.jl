@@ -35,8 +35,8 @@ function plot_ctmc_our_problem(times::Vector{Float64}, states::Vector{Int}, T::F
     ni, np, ns, nt = varioussizes(N)
     S, Skeyer, T_, TG, TB, Tc = statematrices(N)
 
-    u_a_vals = [S[states[i] - 1][1] for i in 1:length(states)]
-    u_b_vals = [S[states[i] - 1][2] for i in 1:length(states)]
+    u_a_vals = [S[states[i] - 1][1][1] for i in 1:length(states)]
+    u_b_vals = [S[states[i] - 1][2][1] for i in 1:length(states)]
     
     all_vals = vcat(u_a_vals, u_b_vals)
     y_min = minimum(all_vals)
@@ -131,7 +131,7 @@ function plot_ctmc_our_problem_multi(Q::Array{Float64,2}, initial_state::Int, T:
         times, states = simulate_ctmc(Q, initial_state, T)
         for state_index in states
             curr_state = S[state_index - 1]
-            ua, ub = curr_state[1], curr_state[2]
+            ua, ub = curr_state[1][1], curr_state[2][1]
             visit_counts[ua + 1, ub + 1] += 1
         end
     end
@@ -178,7 +178,7 @@ function plot_ctmc_invar_distn_our_problem(Q::Array{Float64,2}, N::Int, filename
     pi_matrix = zeros(Float64, N+1, N+1)
     for state_index in 1:ni
         curr_state = S[state_index - 1] 
-        ua, ub = curr_state[1], curr_state[2]
+        ua, ub = curr_state[1][1], curr_state[2][1]
         pi_matrix[ua + 1, ub + 1] += pi_vector[state_index]
     end
 

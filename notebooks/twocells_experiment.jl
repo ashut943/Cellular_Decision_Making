@@ -47,6 +47,10 @@ P_opt_ = P_opt .* (abs.(P_opt) .>= 1e-8)  # Zero out small values
 P_opt_ .= min.(P_opt_, 1.0)                # Cap at 1.0
 Q_opt = Q_maker_using_M(P_opt_, N, λ, S, Skeyer)  # Generate Q matrix
 
+#plot heatmap of Q_opt
+Q_filename = generate_filename(folder_name,"Q_matrix_heatmap")
+plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=false)
+
 # Print results for each start state
 for start_state_idx in startstates
     println(S[start_state_idx-1],"->",tau_opt[start_state_idx])
@@ -56,7 +60,7 @@ println("Is Q irreducible? ", is_irreducible(Q_opt))
 
 # Plot Q matrix heatmap
 Q_filename = generate_filename(folder_name,"Q_matrix_heatmap")
-plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=false)
+plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=true)
 
 # Simulate CTMC
 initial_state = 1
@@ -64,6 +68,7 @@ T = 100.0
 println("absorbing states: ", all_targetstates)
 Q_opt_copy = copy(Q_opt)
 Q_opt_absorbing=Q_absorbing_states_maker(Q_opt_copy, all_targetstates)
+println("determinant of Q_opt_absorbing: ", det(Q_opt_absorbing))
 times, states = simulate_ctmc(Q_opt, initial_state, T)
 times_absorbing, states_absorbing = simulate_ctmc(Q_opt_absorbing, initial_state, T)
 
@@ -124,3 +129,89 @@ open(optimal_values_filename, "w") do io
     println(io, "F-(.,1) = ", P_opt_[3*N+1:4*N])
     println(io, "G = ", P_opt_[4*N+1:end-1])
 end
+
+
+###
+# LOCALLY_SOLVED, Optimal: 4.88454023551395, Upper bound: 16.337801637343496, Lower Bound: 1.241834614843249
+# Is Q irreducible? true
+# absorbing states: [4, 20, 36, 52, 13, 29, 45, 61, 16, 32, 48, 64]
+# Plotting single ctmc simulation...
+# Plotting multiple ctmc simulation...
+# Plotting invariant ctmc heatmap...
+# Plotting multiple ctmc simulation with absorbing states...
+# Plotting invariant ctmc heatmap with absorbing states...
+# ================================================
+# Optimal solution
+# P_opt: [0.4320437464676692, 1.0, 1.0, -0.0, -0.0, -0.0, -0.0, -0.0, 0.9999999950706491, 1.0, 1.0, 0.9999999675559776, -0.0, 1.0, 1.0, 1.0, 0.19901723495916154]
+# tau_opt_0: 4.88454023551395
+# ------------------------------------------------
+# F^+(.,0): [0.4320437464676692, 1.0, 1.0]
+# F^+(.,1): [-0.0, -0.0, -0.0]
+# F^-(.,0): [-0.0, -0.0, 0.9999999950706491]
+# F^-(.,1): [1.0, 1.0, 0.9999999675559776]
+# G: [-0.0, 1.0, 1.0, 1.0]
+# k_off: 0.19901723495916154
+
+
+##
+# LOCALLY_SOLVED, Optimal: 4.88454023551395, Upper bound: 16.337801637343496, Lower Bound: 1.2418346148432489
+# Is Q irreducible? true
+# absorbing states: [49, 51, 50, 52, 13, 15, 14, 16, 61, 63, 62, 64]
+# Plotting single ctmc simulation...
+# Plotting multiple ctmc simulation...
+# Plotting invariant ctmc heatmap...
+# Plotting multiple ctmc simulation with absorbing states...
+# Plotting invariant ctmc heatmap with absorbing states...
+# ================================================
+# Optimal solution
+# P_opt: [0.432043746467669, 1.0, 1.0, -0.0, -0.0, -0.0, -0.0, -0.0, 0.9999999950706491, 1.0, 1.0, 0.9999999675559776, -0.0, 1.0, 1.0, 1.0, 0.19901723495916143]
+# tau_opt_0: 4.88454023551395
+# ------------------------------------------------
+# F^+(.,0): [0.432043746467669, 1.0, 1.0]
+# F^+(.,1): [-0.0, -0.0, -0.0]
+# F^-(.,0): [-0.0, -0.0, 0.9999999950706491]
+# F^-(.,1): [1.0, 1.0, 0.9999999675559776]
+# G: [-0.0, 1.0, 1.0, 1.0]
+# k_off: 0.19901723495916143
+
+
+# LOCALLY_SOLVED, Optimal: 7.621081245815218, Upper bound: 91.44648036355383, Lower Bound: 1.60099236268152
+# Is Q irreducible? true
+# absorbing states: [4, 20, 36, 52, 13, 29, 45, 61, 16, 32, 48, 64]
+# Plotting single ctmc simulation...
+# Plotting multiple ctmc simulation...
+# Plotting invariant ctmc heatmap...
+# Plotting multiple ctmc simulation with absorbing states...
+# Plotting invariant ctmc heatmap with absorbing states...
+# ================================================
+# Optimal solution
+# P_opt: [0.2363716603042171, 0.7320930083303566, 0.7626819344428352, -0.0, -0.0, -0.0, -0.0, -0.0, 1.0, 1.0, 0.9999999971498481, 0.9999999978425006, -0.0, 1.0, 1.0, 1.0, 0.08912213235889899]
+# tau_opt_0: 7.621081245815218
+# ------------------------------------------------
+# F^+(.,0): [0.2363716603042171, 0.7320930083303566, 0.7626819344428352]
+# F^+(.,1): [-0.0, -0.0, -0.0]
+# F^-(.,0): [-0.0, -0.0, 1.0]
+# F^-(.,1): [1.0, 0.9999999971498481, 0.9999999978425006]
+# G: [-0.0, 1.0, 1.0, 1.0]
+# k_off: 0.08912213235889899
+
+
+# LOCALLY_SOLVED, Optimal: 7.6210812458152155, Upper bound: 91.4464803635558, Lower Bound: 1.6009923626814664
+# Is Q irreducible? true
+# absorbing states: [49, 51, 50, 52, 13, 15, 14, 16, 61, 63, 62, 64]
+# Plotting single ctmc simulation...
+# Plotting multiple ctmc simulation...
+# Plotting invariant ctmc heatmap...
+# Plotting multiple ctmc simulation with absorbing states...
+# Plotting invariant ctmc heatmap with absorbing states...
+# ================================================
+# Optimal solution
+# P_opt: [0.23637166030421594, 0.7320930083303432, 0.7626819344428606, -0.0, -0.0, -0.0, -0.0, -0.0, 1.0, 1.0, 0.9999999971498499, 0.9999999978425046, -0.0, 1.0, 1.0, 1.0, 0.08912213235889839]
+# tau_opt_0: 7.6210812458152155
+# ------------------------------------------------
+# F^+(.,0): [0.23637166030421594, 0.7320930083303432, 0.7626819344428606]
+# F^+(.,1): [-0.0, -0.0, -0.0]
+# F^-(.,0): [-0.0, -0.0, 1.0]
+# F^-(.,1): [1.0, 0.9999999971498499, 0.9999999978425046]
+# G: [-0.0, 1.0, 1.0, 1.0]
+# k_off: 0.08912213235889839

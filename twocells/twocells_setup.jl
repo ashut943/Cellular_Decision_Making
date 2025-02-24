@@ -19,7 +19,7 @@ function statematrices(N)
             for sa in 0:1
                 for sb in 0:1
                     index = (2 * sa + sb) * (N + 1)^2 + (N + 1) * ua + ub
-                    S[index] = (ua, ub, sa, sb)
+                    S[index] = ((ua,sa),(ub,sb))
                 end
             end
         end
@@ -46,59 +46,79 @@ function statematrices(N)
             end
         end
     end
-    Tc = [i for i in 0:ni-1 if i ∉ T];
+    Tc = [i for i in 0:ni-1 if i ∉ T];#all states except terminal states
     return S,Skeyer,T,TG,TB,Tc
 end
 
-function Q_maker(P,N::Int64,λ::Float64,S,Skeyer)
+function get_transition(u, u_, N)
+    ((ua,sa), (ub,sb)) = u
+    ((ua_,sa_), (ub_,sb_)) = u_
+    
+    if ub == ub_ && sa == sa_ && sb == sb_
+        ua_ == ua + 1 && return N * sa + ua + 1
+        ua_ == ua - 1 && return sa * N + ua + 2N
+    end
+    
+    if ua == ua_ && sa == sa_ && sb == sb_
+        ub_ == ub + 1 && return N * sb + ub + 1
+        ub_ == ub - 1 && return sb * N + ub + 2N
+    end
+    
+    if ua == ua_ && ub == ub_
+        if sb == sb_ && sa != sa_
+            sa == 0 && sa_ == 1 && return 4N + ub + 1
+            sa == 1 && sa_ == 0 && return 5N + 2
+        end
+        if sa == sa_ && sb != sb_
+            sb == 0 && sb_ == 1 && return 4N + ua + 1
+            sb == 1 && sb_ == 0 && return 5N + 2
+        end
+    end
+    return nothing
+end
+
+function get_transition_simplified(u, u_, N)
+    ((ua,sa), (ub,sb)) = u
+    ((ua_,sa_), (ub_,sb_)) = u_
+    
+    if ub == ub_ && sa == sa_ && sb == sb_
+        ua_ == ua + 1 && return N * sa + ua + 1
+        ua_ == ua - 1 && return sa * N + ua + 2N
+    end
+    
+    if ua == ua_ && sa == sa_ && sb == sb_
+        ub_ == ub + 1 && return N * sb + ub + 1 + (5*N+2) 
+        ub_ == ub - 1 && return sb * N + ub + 2N + (5*N+2)
+    end
+    
+    if ua == ua_ && ub == ub_
+        if sb == sb_ && sa != sa_
+            sa == 0 && sa_ == 1 && return 4N + ub + 1
+            sa == 1 && sa_ == 0 && return 5N + 2
+        end
+        if sa == sa_ && sb != sb_
+            sb == 0 && sb_ == 1 && return 4N + ua + 1 + (5*N+2)
+            sb == 1 && sb_ == 0 && return 5N + 2 + (5*N+2)
+        end
+    end
+    return nothing
+end
+
+function Q_maker(P,N,λ,S,Skeyer)
     ni,np,ns,nt=varioussizes(N)
     Q=zeros(ni,ni)
     for (u, u_) in Iterators.product(values(S), values(S))
         if u == u_
             continue
         end
-        # println(u," ",u_)
         i = Skeyer[u]
         j = Skeyer[u_]
-        flag = 0
-        tempk = 0
-        ua, ub, sa, sb = u
-        ua_, ub_, sa_, sb_ = u_
-    
-        if ua_==ua+1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sa + ua + 1
-        elseif ua_==ua-1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sa * N + ua + 2 * N 
-        elseif ub_==ub+1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sb + ub + 1
-        elseif ub_==ub-1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sb * N + ub + 2 * N 
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==0 && sa_==1
-            flag = 1
-            tempk = 4 * N + ub + 1
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==1 && sa_==0
-            flag = 1
-            tempk = 5 * N + 2
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==0 && sb_==1
-            flag = 1
-            tempk = 4 * N + ua + 1
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==1 && sb_==0
-            flag = 1
-            tempk = 5 * N + 2
-        end
-        if flag == 1
+        if (tempk = get_transition(u, u_, N)) !== nothing
             Q[i+1, j+1] = P[tempk]
         end
     end
-
     for i in 1:ni
-        # Calculate the sum of each row for Qi
-        qi = sum(Q[i, :])
-        Q[i,i] = -qi
+        Q[i,i] = -sum(Q[i, :])
     end
     return Q
     
@@ -113,37 +133,7 @@ function Q_maker_simplified(P,N::Int64,λ::Float64,S,Skeyer)
         end
         i = Skeyer[u]
         j = Skeyer[u_]
-        flag = 0
-        tempk = 0
-        ua, ub, sa, sb = u
-        ua_, ub_, sa_, sb_ = u_
-    
-        if ua_==ua+1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sa + ua + 1
-        elseif ua_==ua-1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sa * N + ua + 2 * N 
-        elseif ub_==ub+1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sb + ub + 1+(5*N+2)
-        elseif ub_==ub-1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sb * N + ub + 2 * N +(5*N+2)
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==0 && sa_==1
-            flag = 1
-            tempk = 4 * N + ub + 1
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==1 && sa_==0
-            flag = 1
-            tempk = 5 * N + 2
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==0 && sb_==1
-            flag = 1
-            tempk = 4 * N + ua + 1+(5*N+2)
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==1 && sb_==0
-            flag = 1
-            tempk = 5 * N + 2+(5*N+2)
-        end
-        if flag == 1
+        if (tempk = get_transition_simplified(u, u_, N)) !== nothing
             Q[i+1, j+1] = P[tempk]
         end
     end
@@ -157,7 +147,6 @@ function Q_maker_simplified(P,N::Int64,λ::Float64,S,Skeyer)
     
 end
 
-
 function Q_maker_original_mod(P,N::Int64,λ::Float64, model,S,Skeyer)
     ni,np,ns,nt=varioussizes(N)
     Q=@expression(model, zeros(AffExpr, ni, ni)) 
@@ -167,104 +156,39 @@ function Q_maker_original_mod(P,N::Int64,λ::Float64, model,S,Skeyer)
         end
         i = Skeyer[u]
         j = Skeyer[u_]
-        flag = 0
-        ua, ub, sa, sb = u
-        ua_, ub_, sa_, sb_ = u_
-
-        tempk = 0
-
-        if ua_==ua+1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sa + ua + 1
-        elseif ua_==ua-1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sa * N + ua + 2 * N 
-        elseif ub_==ub+1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sb + ub + 1
-        elseif ub_==ub-1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sb * N + ub + 2 * N 
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==0 && sa_==1
-            flag = 1
-            tempk = 4 * N + ub + 1
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==1 && sa_==0
-            flag = 1
-            tempk = 5 * N + 2
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==0 && sb_==1
-            flag = 1
-            tempk = 4 * N + ua + 1
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==1 && sb_==0
-            flag = 1
-            tempk = 5 * N + 2
-        end
-        if flag == 1
+        if (tempk = get_transition(u, u_, N)) !== nothing
             Q[i+1, j+1] = P[tempk]
         end
     end
     for i in 1:ni
-        qi = sum(Q[i, :])
-        Q[i,i] = -qi
+        Q[i,i] = -sum(Q[i, :])
     end
     return Q
 end
 
-function M_maker(N::Int64,λ::Float64,S,Skeyer)
-    ni,np,ns,nt=varioussizes(N)
-    M=zeros(Int, ni, ni, np);
+function M_maker(N::Int64, λ::Float64, S, Skeyer)
+    ni, np, ns, nt = varioussizes(N)
+    M = zeros(Int, ni, ni, np)
+    
     for (u, u_) in Iterators.product(values(S), values(S))
         if u == u_
             continue
         end
-
+        
         i = Skeyer[u]
         j = Skeyer[u_]
-        flag = 0
-        ua, ub, sa, sb = u
-        ua_, ub_, sa_, sb_ = u_
-
-        tempk = 0
-
-        if ua_==ua+1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sa + ua + 1
-        elseif ua_==ua-1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sa * N + ua + 2 * N 
-        elseif ub_==ub+1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sb + ub + 1
-        elseif ub_==ub-1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sb * N + ub + 2 * N 
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==0 && sa_==1
-            flag = 1
-            tempk = 4 * N + ub + 1
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==1 && sa_==0
-            flag = 1
-            tempk = 5 * N + 2
-        elseif ua == ua_ && ub == ub_  && sa == sa_ && sb==0 && sb_==1
-            flag = 1
-            tempk = 4 * N + ua + 1
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==1 && sb_==0
-            flag = 1
-            tempk = 5 * N + 2
-        end
-
-        if flag == 1
-            M[i+1, j+1, tempk] = flag
+        
+        if (tempk = get_transition(u, u_, N)) !== nothing
+            M[i+1, j+1, tempk] = 1
         end
     end
     for k in 1:np
-        # Calculate the sum of each row for the kth slice of M (equivalent to M[:,:,k] in Python)
-        M_i = [sum(M[:, :, k][i, :]) for i in 1:ni]
-
+        row_sums = [sum(M[:, :, k][i, :]) for i in 1:ni]
         for u in values(S)
             i = Skeyer[u]
-            M[i+1, i+1, k] = -M_i[i+1]
+            M[i+1, i+1, k] = -row_sums[i+1]
         end
     end
-    
     return M
 end
 
@@ -278,7 +202,6 @@ end
 function Q_absorbing_states_maker(Q, absorbing_states)
     for i in absorbing_states
         Q[i, :] .= 0.0
-        #Q[i, i] = 1.0
     end
     return Q
 end
@@ -293,51 +216,17 @@ function M_maker_mod(N::Int64,λ::Float64, model,S,Skeyer)
 
         i = Skeyer[u]
         j = Skeyer[u_]
-        flag = 0
-        ua, ub, sa, sb = u
-        ua_, ub_, sa_, sb_ = u_
-
-        tempk = 0
-
-        if ua_==ua+1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sa + ua + 1
-        elseif ua_==ua-1 && ub == ub_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sa * N + ua + 2 * N 
-        elseif ub_==ub+1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = N * sb + ub + 1
-        elseif ub_==ub-1 && ua == ua_ && sa == sa_ && sb == sb_
-            flag = 1
-            tempk = sb * N + ub + 2 * N 
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==0 && sa_==1
-            flag = 1
-            tempk = 4 * N + ub + 1
-        elseif ua == ua_ && ub == ub_ && sb == sb_ && sa==1 && sa_==0
-            flag = 1
-            tempk = 5 * N + 2
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==0 && sb_==1
-            flag = 1
-            tempk = 4 * N + ua + 1
-        elseif ua == ua_ && ub == ub_ && sa == sa_ && sb==1 && sb_==0
-            flag = 1
-            tempk = 5 * N + 2
-        end
-
-        if flag == 1
-            M[i+1, j+1, tempk] = flag
+        if (tempk = get_transition(u, u_, N)) !== nothing
+            M[i+1, j+1, tempk] = 1
         end
     end
     for k in 1:np
-        M_i = [sum(M[:, :, k][i, :]) for i in 1:ni]
-
+        row_sums = [sum(M[:, :, k][i, :]) for i in 1:ni]
         for u in values(S)
             i = Skeyer[u]
-            M[i+1, i+1, k] = -M_i[i+1]
+            M[i+1, i+1, k] = -row_sums[i+1]
         end
     end
-    
     return M
 end
 
@@ -375,18 +264,17 @@ function M_maker_tilde(N::Int64,λ::Float64,S,Skeyer,T,TG,TB,Tc)
     return Mtilde
 end
 
-function M_maker_tilde_mod(N::Int64,λ::Float64, model,S,Skeyer,T,TG,TB,Tc)
+function M_maker_tilde(N::Int64,λ::Float64,S,Skeyer,T,TG,TB,Tc)
     ni,np,ns,nt=varioussizes(N)
-    M=M_maker_mod(N,λ,model,S,Skeyer)
+    M=M_maker(N,λ,S,Skeyer)
     R = zeros(ns, ni)
     for i in 1:ns
         R[i,Tc[i]+1] = 1
     end
-    Mtilde=@expression(model, zeros(AffExpr, ns, ns, np)) 
+    Mtilde=zeros(ns, ns, np)
     for k in 1:np
         Mtilde[:, :, k] = R * M[:, :, k] * R'
     end
-
     return Mtilde
 end
 
@@ -414,24 +302,6 @@ function alpha_maker(N::Int64,λ::Float64,S,Skeyer,T,TG,TB,Tc)
     ni,np,ns,nt=varioussizes(N)
     alpha=zeros(np, ns)
     M=M_maker(N,λ,S,Skeyer)
-    for i in 1:ns
-        Si=Tc[i]
-        for j in 1:ni
-            for k in 1:np
-                if (j-1 ∈ TB)
-                    alpha[k,i]+=M[Si+1,j,k]
-                end
-                
-            end
-        end
-    end
-    return alpha
-end
-
-function alpha_maker_mod(N::Int64,λ::Float64, model,S,Skeyer,T,TG,TB,Tc)
-    ni,np,ns,nt=varioussizes(N)
-    alpha=@expression(model, zeros(AffExpr, np, ns))
-    M=M_maker_mod(N,λ,model,S,Skeyer)
     for i in 1:ns
         Si=Tc[i]
         for j in 1:ni

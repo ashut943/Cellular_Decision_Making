@@ -22,12 +22,11 @@ function run_nonlinear_solver(N::Int, λ::Float64, initial_Pval::Float64, initia
 
     @variable(model, 0<=P_[1:np] <= 1) 
     # @variable(model, 0<=P_[1:np]) 
+    # println(Q_maker_original_mod(P_, N, λ, model, S, Skeyer))
     @variable(model, τ[1:ni]) 
     @objective(model, Min, τ[1])
-    @expression(model, A, hitting_time_mod_give_A(Q_maker_original_mod(P_, N, λ, model, S, Skeyer), 
-                targetstates_good, targetstates_bad, allstates, λ, model))
-    @expression(model, b, hitting_time_mod_give_b(Q_maker_original_mod(P_, N, λ, model, S, Skeyer), 
-                targetstates_good, targetstates_bad, allstates, λ, model))
+    @expression(model, A, hitting_time_mod_give_A(Q_maker_original_mod(P_, N, λ, model, S, Skeyer),  targetstates_good, targetstates_bad, allstates, λ, model))
+    @expression(model, b, hitting_time_mod_give_b(Q_maker_original_mod(P_, N, λ, model, S, Skeyer),  targetstates_good, targetstates_bad, allstates, λ, model))
     @constraint(model, A * τ == b)
     #Let's fix g:
     if(g_fixed==true)
