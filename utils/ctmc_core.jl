@@ -43,54 +43,6 @@ function hitting_time(Q,targetstates_good,targetstates_bad,startstates,λ)
     return [T[start_state] for start_state ∈ startstates]
 end
 
-function simulate_ctmc(Q::Array{Float64,2}, initial_state::Int, T::Float64)
-    num_states = size(Q, 1)
-    t = 0.0
-    s = initial_state
-    times = [t]
-    states = [s]
-    tolerance = 1e-9
-
-    while t < T
-        λ = -Q[s, s]
-        if λ < -tolerance
-            println("Rate is negative at state $s.", Q[s, :])
-            error("Rate out of current state is negative at state $s.")
-        elseif λ == 0
-            push!(times, T)
-            push!(states, s)
-            break
-        end
-
-        Δt = rand(Exponential(λ))
-        t += Δt
-        if t >= T
-            break
-        end
-
-        rates = copy(Q[s, :])
-        rates[s] = 0.0
-        total_rate = sum(rates)
-        
-        if total_rate <= 0
-            error("No transitions available from current state $s.")
-        end
-
-        probs = rates / total_rate
-        dist = Categorical(probs)
-        s = rand(dist)
-        push!(times, t)
-        push!(states, s)
-    end
-
-    if times[end] < T && Q[states[end], states[end]] != 0
-        push!(times, T)
-        push!(states, states[end])
-    end
-
-    return times, states
-end
-
 function simulate_mul_ctmc(Q::Array{Float64,2}, initial_state::Int, T::Float64, num_paths::Int, num_time_points::Int)
     num_states = size(Q, 1)
     time_points = range(0, T, length=num_time_points)

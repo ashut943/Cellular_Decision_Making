@@ -1,4 +1,4 @@
-using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO, DataStructures, MathOptInterface, Printf, Gurobi, MosekTools
+using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO, DataStructures, MathOptInterface, Printf, MosekTools
 
 function run_nonlinear_solver(N::Int, λ::Float64, initial_Pval::Float64, initial_tauval::Float64, g_fixed::Bool, f_fixed::Bool)
     #Find upper bound
