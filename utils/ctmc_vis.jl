@@ -10,20 +10,18 @@ function plot_ctmc(S::StochasticPath)
         ylim=(minimum(S.states)-0.5, maximum(S.states)+0.5),
         grid=:both,
         size=(1500, 1000),left_margin=10Plots.mm, right_margin=10Plots.mm,bottom_margin=10Plots.mm)
-    plot_ctmc!(p,S)
+    plot_ctmc!(p,S.times,S.states,S.final_time)
     
     return p
 end
 
-function plot_ctmc!(p,S::StochasticPath;c=:gray)
-    times = S.times
-    states = S.states
-    final_time = S.final_time
+function plot_ctmc!(p,times, states, final_time;c=:gray,linewidth=2)
+    # Core plotting functionality for a set of discrete jumps between "states" and "times"
     for i in 1:(length(times)-1)
-        plot!(p,[times[i], times[i+1]], [states[i], states[i]], linewidth=2, color=c, label=false)
-        plot!([times[i+1], times[i+1]], [states[i], states[i+1]], linestyle=:dash, color=c, label=false)
+        plot!(p,[times[i], times[i+1]], [states[i], states[i]], linewidth=linewidth, color=c, label=false)
+        plot!([times[i+1], times[i+1]], [states[i], states[i+1]], linewidth=linewidth, color=c, label=false)
     end
-    plot!(p,[times[end], final_time], [states[end], states[end]], linewidth=2, color=c, label=false)
+    plot!(p,[times[end], final_time], [states[end], states[end]], linewidth=linewidth, color=c, label=false)
 end
 
 function plot_Q_with_colored_yticks(Q::Matrix, N::Int, special_ticks::Vector{Int}, filename, λ::Float64=missing; save_plots::Bool=true)
