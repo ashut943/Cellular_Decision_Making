@@ -1,5 +1,6 @@
 using Plots
 using CellularDecisions
+using StatsBase
 
 function average_trajectory(path_array, time_points)
     ua_avg = zeros(length(time_points))
@@ -21,11 +22,40 @@ function average_trajectory(path_array, time_points)
 end
 
 
+function collect_transitions(path_array)
+    N = path_array[1].internal_states
+    all_transitions = vcat([[(path.states[i],path.states[i+1]) for i in 1:length(path.states)-1] for path in path_array]...)
+
+    S_dict, _, _, _, _, _ = statematrices(N)
+    ua_transitions = []
+    ub_transitions = []
+    for transition in all_transitions
+        u_a_0 = S_dict[transition[1] - 1][1][1]
+        s_a_0 = S_dict[transition[1] - 1][1][2]
+        u_b_0 = S_dict[transition[1] - 1][2][1]
+        s_b_0 = S_dict[transition[1] - 1][2][2]
+
+        u_a_1 = S_dict[transition[2] - 1][1][1]
+        s_a_1 = S_dict[transition[2] - 1][1][2]
+        u_b_1 = S_dict[transition[2] - 1][2][1]
+        s_b_1 = S_dict[transition[2] - 1][2][2]
+
+        if (s_a_0 == s_a_1) && (u_a_0 == u_a_1)
+            push!(ub_transitions, ([u_b_0,s_b_0], [u_b_1,s_b_1]))
+        else
+            push!(ua_transitions, ([u_a_0,s_a_0], [u_a_1,s_a_1]))
+        end
+    end
+
+    transition_stats_a = countmap(ua_transitions)
+    transition_stats_b = countmap(ub_transitions)
+    return transition_stats_a, transition_stats_b, length(all_transitions)
+end
 
 # This script is half complete, I'm assuming we can load Q_opt_absorbing from somewhere
 S_arr  = [CellularDecisions.simulate_ctmc(Q_opt_absorbing, initial_state, T,N) for i = 1:4000]
-CellularDecisions.save(S_arr,"tmp.h5")
-S2_arr = CellularDecisions.load("tmp.h5")
+#CellularDecisions.save(S_arr,"tmp.h5")
+#S2_arr = CellularDecisions.load("tmp.h5")
 
 targetstates_good=[target_state+1 for target_state ∈ TG];  # Good target states
 targetstates_bad=[target_state+1 for target_state ∈ TB];   # Bad target states
@@ -69,3 +99,33 @@ for i = 1:50
 end
 
 plot(p3,p4,layout=(2,1))
+
+
+
+success_trajectories_unpacked = S_arr[terminal_classes .== 1]
+transitions_a,transitions_b,num_transitions = collect_transitions(success_trajectories_unpacked)
+
+p = plot()
+
+Δ = 0.02 # for offset
+scale = 80 # for line thickness
+for (i,tstats) in enumerate([transitions_a, transitions_b])
+    Δx = 2*i-1
+    for k1 in collect(keys(tstats))
+        weight = scale*tstats[k1]/num_transitions
+        
+        u0,s0 =k1[1]
+        u1,s1 =k1[2]
+        
+        color = (u0 <= u1)*(s0 <= s1) ? :red : :blue
+        
+        xoffset = (u0 != u1) ? ((u0 < u1) ? Δ*(1+0.1*weight) : -Δ*(1+0.1*weight)) : 0
+        yoffset = (s0 != s1) ? ((s0 < s1) ? Δ*(1+0.1*weight) : -Δ*(1+0.1*weight)) : 0
+        plot!(p,[Δx + s0+xoffset,Δx + s1+xoffset],[u0+yoffset,u1+yoffset],c=color,lw = weight,label=false)
+
+    end
+end
+
+xticks!(p, [1.5, 3.5], ["cell 1", "cell 2"])
+plot!(p,size=(300,400),grid=false,ylabel="Internal state")
+#savefig(p,"plots/successful_transitions.pdf")
