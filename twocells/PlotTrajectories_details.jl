@@ -32,6 +32,7 @@ all_targetstates = vcat(targetstates_good, targetstates_bad)
 lambda_str = replace(string(λ), "." => "_")
 base_folder = joinpath(dirname(@__DIR__), "experiments", "results", "Interior_point_method_results")
 folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_lambda_%s", N, lambda_str))
+twocell_system_filename = generate_filename(folder_name,"twocell_system")
 twocell_system = CellularDecisions.load(twocell_system_filename)
 
 N=twocell_system.internal_states
@@ -44,8 +45,8 @@ plot_Q_with_colored_yticks(Q, N, all_targetstates, Q_filename, λ, save_plots=tr
 
 # Simulate CTMC
 println("absorbing states: ", all_targetstates)
-Q_opt_copy = copy(Q_opt)
-Q_opt_absorbing=Q_absorbing_states_maker(Q_opt_copy, all_targetstates)
+Q_opt = copy(Q)
+Q_opt_absorbing=Q_absorbing_states_maker(Q_opt, all_targetstates)
 path_arr = [CellularDecisions.simulate_ctmc(Q_opt, initial_state, T, N) for i = 1:num_simulations]
 path_arr_absorbing = [CellularDecisions.simulate_ctmc(Q_opt_absorbing, initial_state, T, N) for i = 1:num_simulations]
 trajectories_filename = generate_filename(folder_name,"trajectories")
