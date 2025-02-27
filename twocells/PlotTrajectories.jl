@@ -1,7 +1,6 @@
-using Plots
+using Plots, Printf, FileIO, StatsBase
 using Revise
 using CellularDecisions
-using StatsBase
 
 function average_trajectory(path_array, time_points)
     ua_avg = zeros(length(time_points))
@@ -27,19 +26,19 @@ function collect_transitions(path_array)
     N = path_array[1].internal_states
     all_transitions = vcat([[(path.states[i],path.states[i+1]) for i in 1:length(path.states)-1] for path in path_array]...)
 
-    S_dict, _, _, _, _, _ = statematrices(N)
+    statedict, _, _, _, _, _ = CellularDecisions.statematrices(N)
     ua_transitions = []
     ub_transitions = []
     for transition in all_transitions
-        u_a_0 = S_dict[transition[1] - 1][1][1]
-        s_a_0 = S_dict[transition[1] - 1][1][2]
-        u_b_0 = S_dict[transition[1] - 1][2][1]
-        s_b_0 = S_dict[transition[1] - 1][2][2]
+        u_a_0 = statedict[transition[1] - 1][1][1]
+        s_a_0 = statedict[transition[1] - 1][1][2]
+        u_b_0 = statedict[transition[1] - 1][2][1]
+        s_b_0 = statedict[transition[1] - 1][2][2]
 
-        u_a_1 = S_dict[transition[2] - 1][1][1]
-        s_a_1 = S_dict[transition[2] - 1][1][2]
-        u_b_1 = S_dict[transition[2] - 1][2][1]
-        s_b_1 = S_dict[transition[2] - 1][2][2]
+        u_a_1 = statedict[transition[2] - 1][1][1]
+        s_a_1 = statedict[transition[2] - 1][1][2]
+        u_b_1 = statedict[transition[2] - 1][2][1]
+        s_b_1 = statedict[transition[2] - 1][2][2]
 
         if (s_a_0 == s_a_1) && (u_a_0 == u_a_1)
             push!(ub_transitions, ([u_b_0,s_b_0], [u_b_1,s_b_1]))
@@ -53,15 +52,40 @@ function collect_transitions(path_array)
     return transition_stats_a, transition_stats_b, length(all_transitions)
 end
 
-# This script is half complete, I'm assuming we can load Q_opt_absorbing from somewhere
-S_arr  = [CellularDecisions.simulate_ctmc(Q_opt_absorbing, initial_state, T,N) for i = 1:4000]
+# load the data
+N = 3  # Number of states - 1
+λ = 20.0  # Lambda parameter
+initial_state = 1  # Initial state for simulations
+T = 1000.0  # Time for simulations
+num_simulations = 4000  # Number of simulations
+
+# Get state matrices, sizes, and target states
+statedict,statedictinv,terminal_states,TG,TB,Tc=CellularDecisions.statematrices(N);
+ni,np,ns,nt=CellularDecisions.varioussizes(N)
+targetstates_good=[target_state+1 for target_state ∈ TG];  # Good target states
+targetstates_bad=[target_state+1 for target_state ∈ TB];   # Bad target states
+targetstates=[targetstates_good;targetstates_bad]          # All target states
+startstates=[start_state+1 for start_state ∈ Tc];         # Starting states
+allstates=[startstates;targetstates_good; targetstates_bad]
+all_targetstates = vcat(targetstates_good, targetstates_bad)
+
+lambda_str = replace(string(λ), "." => "_")
+base_folder = joinpath(dirname(@__DIR__), "experiments", "results", "Interior_point_method_results")
+folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_lambda_%s", N, lambda_str))
+twocell_system_filename = generate_filename(folder_name,"twocell_system")
+twocell_system = CellularDecisions.load(twocell_system_filename)
+
+N=twocell_system.internal_states
+Q = twocell_system.Q_matrix
+P = twocell_system.parameters
+
+Q_opt_absorbing=Q_absorbing_states_maker(Q, all_targetstates)
+
+S_arr  = [CellularDecisions.simulate_ctmc(Q_opt_absorbing, initial_state, T,N) for i = 1:num_simulations]
 #CellularDecisions.save(S_arr,"tmp.h5")
 #S2_arr = CellularDecisions.load("tmp.h5")
 
-targetstates_good=[target_state+1 for target_state ∈ TG];  # Good target states
-targetstates_bad=[target_state+1 for target_state ∈ TB];   # Bad target states
-
-targetstates_good_a = targetstates_good[[S[t-1][2][1] ==0 for t in targetstates_good]]
+targetstates_good_a = targetstates_good[[statedict[t-1][2][1] ==0 for t in targetstates_good]]
 targetstates_good_b = setdiff(targetstates_good, targetstates_good_a)
 
 terminal_classes = [CellularDecisions.terminal_class(path, [targetstates_good_a,targetstates_good_b], targetstates_bad) for path in S_arr]
@@ -76,11 +100,11 @@ ua_avg_fail, ub_avg_fail, ua_std_fail, ub_std_fail = average_trajectory(failed_t
 ua_avg_succ, ub_avg_succ, ua_std_succ, ub_std_succ = average_trajectory(success_trajectories, t_plot)
 
 # plot the average
-p1 = plot(t_plot,ua_avg_fail,ribbon = ua_std_fail,label="ua",xlabel="Time",ylabel="Probability",title="Unsuccesful trajectories")
+p1 = plot(t_plot,ua_avg_fail,ribbon = ua_std_fail,label="ua",xlabel="Time",ylabel="State",title="Unsuccesful trajectories")
 plot!(p1,t_plot,ub_avg_fail,ribbon = ub_std_fail,label="ub")
 
 
-p2 = plot(t_plot,ua_avg_succ,ribbon = ua_std_succ,label="ua",xlabel="Time",ylabel="Probability",title="Succesful trajectories")
+p2 = plot(t_plot,ua_avg_succ,ribbon = ua_std_succ,label="ua",xlabel="Time",ylabel="State",title="Succesful trajectories")
 plot!(p2, t_plot,ub_avg_succ,ribbon = ub_std_succ,label="ub")
 
 plot(p1,p2,layout=(2,1))
@@ -130,4 +154,4 @@ end
 
 xticks!(p, [1.5, 3.5], ["cell 1", "cell 2"])
 plot!(p,size=(300,400),grid=false,ylabel="Internal state")
-#savefig(p,"plots/successful_transitions.pdf")
+savefig(p,"plots/successful_transitions.pdf")
