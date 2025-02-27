@@ -141,4 +141,3 @@ function hitting_time_mod_give_b(Q,targetstates_good,targetstates_bad,startstate
     end
     return b
 end
-

@@ -1,4 +1,5 @@
 using Plots
+using Revise
 using CellularDecisions
 using StatsBase
 
@@ -86,14 +87,15 @@ plot(p1,p2,layout=(2,1))
 savefig("plots/Average_traj_q_absorb.pdf")
 
 # look at some individual trajectories
+n_plots = min(length(failed_trajectories), 50) # number of trajectroeies to plot, need this as there might not be enough failed trajectories
 p3 = plot()
-for i = 1:50
+for i = 1:n_plots
     plot_ctmc!(p3,failed_trajectories[i].times, failed_trajectories[i].u1, failed_trajectories[i].final_time,c=:blue,linewidth=0.2)
     plot_ctmc!(p3,failed_trajectories[i].times, failed_trajectories[i].u2, failed_trajectories[i].final_time,c=:red,linewidth=0.2)
 end
 
 p4 = plot()
-for i = 1:50
+for i = 1:n_plots
     plot_ctmc!(p4,success_trajectories[i].times, success_trajectories[i].u1, success_trajectories[i].final_time,c=:blue,linewidth=0.2)
     plot_ctmc!(p4,success_trajectories[i].times, success_trajectories[i].u2, success_trajectories[i].final_time,c=:red,linewidth=0.2)
 end

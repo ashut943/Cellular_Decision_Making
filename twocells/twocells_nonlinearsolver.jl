@@ -1,4 +1,6 @@
 using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO, DataStructures, MathOptInterface, Printf, MosekTools
+using Revise
+import CellularDecisions
 
 function run_nonlinear_solver(N::Int, λ::Float64, initial_Pval::Float64, initial_tauval::Float64, g_fixed::Bool, f_fixed::Bool)
     #Find upper bound
@@ -7,17 +9,15 @@ function run_nonlinear_solver(N::Int, λ::Float64, initial_Pval::Float64, initia
     set_silent(model) 
     # set_optimizer_attribute(model, "print_level", 0)
 
-    S,Skeyer,T,TG,TB,Tc=statematrices(N);
-    ni,np,ns,nt=varioussizes(N)
+    state_dict,state_dict_inv,_,TG,TB,Tc=CellularDecisions.statematrices(N);
+    ni,np,ns,_=CellularDecisions.varioussizes(N)
 
     # set_optimizer_attribute(model, "print_level", 0)
 
     targetstates_good=[target_state+1 for target_state ∈ TG];
     targetstates_bad=[target_state+1 for target_state ∈ TB];
-    targetstates=[targetstates_good;targetstates_bad]
     startstates=[start_state+1 for start_state ∈ Tc];
     allstates=[startstates;targetstates_good; targetstates_bad]
-    all_targetstates = vcat(targetstates_good, targetstates_bad)
 
 
     @variable(model, 0<=P_[1:np] <= 1) 
@@ -25,8 +25,8 @@ function run_nonlinear_solver(N::Int, λ::Float64, initial_Pval::Float64, initia
     # println(Q_maker_original_mod(P_, N, λ, model, S, Skeyer))
     @variable(model, τ[1:ni]) 
     @objective(model, Min, τ[1])
-    @expression(model, A, hitting_time_mod_give_A(Q_maker_original_mod(P_, N, λ, model, S, Skeyer),  targetstates_good, targetstates_bad, allstates, λ, model))
-    @expression(model, b, hitting_time_mod_give_b(Q_maker_original_mod(P_, N, λ, model, S, Skeyer),  targetstates_good, targetstates_bad, allstates, λ, model))
+    @expression(model, A, hitting_time_mod_give_A(Q_maker_original_mod(P_, N, λ, model, state_dict, state_dict_inv),  targetstates_good, targetstates_bad, allstates, λ, model))
+    @expression(model, b, hitting_time_mod_give_b(Q_maker_original_mod(P_, N, λ, model, state_dict, state_dict_inv),  targetstates_good, targetstates_bad, allstates, λ, model))
     @constraint(model, A * τ == b)
     #Let's fix g:
     if(g_fixed==true)
@@ -98,17 +98,15 @@ function run_nonlinear_solver_bounded(N::Int, λ::Float64, P_bounds_L::Vector{Fl
     set_silent(model) 
     # set_optimizer_attribute(model, "print_level", 0)
 
-    S,Skeyer,T,TG,TB,Tc=statematrices(N);
-    ni,np,ns,nt=varioussizes(N)
+    Skeyer,S,_,TG,TB,Tc=CellularDecisions.statematrices(N);
+    ni,np,ns,_=CellularDecisions.varioussizes(N)
 
     # set_optimizer_attribute(model, "print_level", 0)
 
     targetstates_good=[target_state+1 for target_state ∈ TG];
     targetstates_bad=[target_state+1 for target_state ∈ TB];
-    targetstates=[targetstates_good;targetstates_bad]
     startstates=[start_state+1 for start_state ∈ Tc];
     allstates=[startstates;targetstates_good; targetstates_bad]
-    all_targetstates = vcat(targetstates_good, targetstates_bad)
 
 
     @variable(model, 0<=P_[1:np] <= 1) 
@@ -179,8 +177,8 @@ function run_pipeline_for_various_lambda(N::Int, lambda_values::Vector{Float64},
     for λ in lambda_values
         currlambdaforfilename=round(Int,λ*100)
         # set_optimizer_attribute(model, "tol", 1e-8)
-        S, Skeyer, T, TG, TB, Tc = statematrices(N)
-        ni, np, ns, nt = varioussizes(N)
+        Skeyer,S,_,TG,TB,Tc=CellularDecisions.statematrices(N);
+        ni, np, ns, nt = CellularDecisions.varioussizes(N)
         targetstates_good = [target_state + 1 for target_state ∈ TG]
         targetstates_bad = [target_state + 1 for target_state ∈ TB]
         targetstates = [targetstates_good; targetstates_bad]
@@ -309,15 +307,13 @@ function run_nonlinear_solver_simplified(N::Int, λ::Float64, initial_Pval::Floa
     set_optimizer_attribute(model, "tol", 1e-8)
     set_silent(model) 
 
-    S,Skeyer,T,TG,TB,Tc=statematrices(N);
-    ni,np,ns,nt=varioussizes(N)
+    Skeyer,S,_,TG,TB,Tc=CellularDecisions.statematrices(N);
+    ni,np,ns,_=CellularDecisions.varioussizes(N)
 
     targetstates_good=[target_state+1 for target_state ∈ TG];
     targetstates_bad=[target_state+1 for target_state ∈ TB];
-    targetstates=[targetstates_good;targetstates_bad]
     startstates=[start_state+1 for start_state ∈ Tc];
     allstates=[startstates;targetstates_good; targetstates_bad]
-    all_targetstates = vcat(targetstates_good, targetstates_bad)
 
     nP=2*np
     @variable(model, 0<=P_[1:nP] <= 1) 

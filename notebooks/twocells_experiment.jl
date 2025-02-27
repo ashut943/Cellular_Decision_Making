@@ -1,5 +1,7 @@
 # Import required packages
 using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO
+using Revise
+using CellularDecisions
 
 # Include helper files
 include("../twocells/twocells_vis.jl")
@@ -11,23 +13,22 @@ include("../utils/ctmc_core.jl")
 include("../utils/file_utils.jl")
 include("../utils/video_utils.jl")
 
-# Set problem parameters
 N = 3  # Number of states - 1
-λ = 261.0  # Lambda parameter
-initial_tau_val=10.0  # Initial tau value for optimization
+λ = 20.0  # Lambda parameter
+initial_tau_val=5.0  # Initial tau value for optimization
 initial_P_val=1.0  # Initial P value for optimization
+initial_state = 1  # Initial state for simulations
+T = 1000.0  # Time for simulations
+num_simulations = 4000  # Number of simulations
 
 # Create output directory
 lambda_str = replace(string(λ), "." => "_")
 base_folder = joinpath(dirname(@__DIR__), "experiments", "results", "Interior_point_method_results")
 folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_lambda_%s", N, lambda_str))
 mkpath(folder_name)
-
-# Get state matrices and sizes
-S,Skeyer,T,TG,TB,Tc=statematrices(N);
-ni,np,ns,nt=varioussizes(N)
-
-# Define state sets
+# # Get state matrices, sizes, and target states
+statedict,statedictinv,terminal_states,TG,TB,Tc=CellularDecisions.statematrices(N);
+ni,np,ns,nt=CellularDecisions.varioussizes(N)
 targetstates_good=[target_state+1 for target_state ∈ TG];  # Good target states
 targetstates_bad=[target_state+1 for target_state ∈ TB];   # Bad target states
 targetstates=[targetstates_good;targetstates_bad]          # All target states
@@ -45,64 +46,78 @@ lower_bound=minimum(tau_opt_tilde)
 # Clean up P_opt values
 P_opt_ = P_opt .* (abs.(P_opt) .>= 1e-8)  # Zero out small values
 P_opt_ .= min.(P_opt_, 1.0)                # Cap at 1.0
-Q_opt = Q_maker_using_M(P_opt_, N, λ, S, Skeyer)  # Generate Q matrix
+Q_opt = Q_maker_using_M(P_opt_, N, λ, statedict, statedictinv)  # Generate Q matrix
+
+#save the twocell_system 
+parameters_opt = CellularDecisions.parameter_vector_to_parameters(P_opt_, N)
+twocell_system = CellularDecisions.build_two_cell_system(N, Q_opt, parameters_opt)
+twocell_system_filename = generate_filename(folder_name,"twocell_system")
+CellularDecisions.save(twocell_system,twocell_system_filename)
+twocell_system = CellularDecisions.load(twocell_system_filename)
 
 #plot heatmap of Q_opt
 Q_filename = generate_filename(folder_name,"Q_matrix_heatmap")
-plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=false)
+plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=true)
+
 
 # Print results for each start state
 for start_state_idx in startstates
-    println(S[start_state_idx-1],"->",tau_opt[start_state_idx])
+    println(statedict[start_state_idx-1],"->",tau_opt[start_state_idx])
 end
+
 println(terminationstatus,", Optimal: ", tau_opt[1],", Upper bound: ", upper_bound,", Lower Bound: ",lower_bound)
 println("Is Q irreducible? ", is_irreducible(Q_opt))
 
-# Plot Q matrix heatmap
-Q_filename = generate_filename(folder_name,"Q_matrix_heatmap")
-plot_Q_with_colored_yticks(Q_opt, N, all_targetstates, Q_filename, λ, save_plots=true)
-
 # Simulate CTMC
-initial_state = 1
-T = 100.0
 println("absorbing states: ", all_targetstates)
 Q_opt_copy = copy(Q_opt)
 Q_opt_absorbing=Q_absorbing_states_maker(Q_opt_copy, all_targetstates)
-println("determinant of Q_opt_absorbing: ", det(Q_opt_absorbing))
-times, states = simulate_ctmc(Q_opt, initial_state, T)
-times_absorbing, states_absorbing = simulate_ctmc(Q_opt_absorbing, initial_state, T)
+path_arr = [CellularDecisions.simulate_ctmc(Q_opt, initial_state, T, N) for i = 1:num_simulations]
+path_arr_absorbing = [CellularDecisions.simulate_ctmc(Q_opt_absorbing, initial_state, T, N) for i = 1:num_simulations]
+trajectories_filename = generate_filename(folder_name,"trajectories")
+CellularDecisions.save(path_arr,trajectories_filename*"_not_absorbing.h5")
+CellularDecisions.save(path_arr_absorbing,trajectories_filename*"_absorbing.h5")
+S1_arr = CellularDecisions.load(trajectories_filename*"_not_absorbing.h5")
+S2_arr = CellularDecisions.load(trajectories_filename*"_absorbing.h5")
 
-# Plot single CTMC simulation
+# Plot single CTMC simulation (without absorbing states)
 println("Plotting single ctmc simulation...")
 ctmc_simulation_filename = generate_filename(folder_name,"single_ctmc_simulation")
-plot_ctmc_our_problem(times_absorbing, states_absorbing, T, N, ctmc_simulation_filename, λ, save_plots=true)
+p1 = plot()
+to_plot = unpack(S1_arr[1])
+plot_ctmc!(p1,to_plot.times, to_plot.u1, to_plot.final_time,c=:blue,linewidth=0.2)
+plot_ctmc!(p1,to_plot.times, to_plot.u2, to_plot.final_time,c=:red,linewidth=0.2)
+plot(p1,layout=(1,1))
+savefig(p1,ctmc_simulation_filename * ".png")
+#show plot
+display(p1)
 
-# Parameters for multiple simulations
-num_simulations = 100
-T=1000.0
-initial_state = 1
+# Plot single CTMC simulation (with absorbing states)
+println("Plotting single ctmc simulation with absorbing states...")
+ctmc_simulation_filename = generate_filename(folder_name,"single_ctmc_simulation_absorbing")
+p2 = plot()
+to_plot = unpack(S2_arr[1])
+plot_ctmc!(p2,to_plot.times, to_plot.u1, to_plot.final_time,c=:blue,linewidth=0.2)
+plot_ctmc!(p2,to_plot.times, to_plot.u2, to_plot.final_time,c=:red,linewidth=0.2)
+plot(p2,layout=(1,1))
+savefig(p2,ctmc_simulation_filename * ".png")
+#show plot
+display(p2)
 
 # Plot multiple CTMC simulations
 println("Plotting multiple ctmc simulation...")
-T = 7000.0
 longtime_heatmap_simulation_filename = generate_filename(folder_name,"multiple_ctmc_simulation_heatmap_longtime")
-plot_ctmc_our_problem_multi(Q_opt, initial_state, T, N, num_simulations, longtime_heatmap_simulation_filename, λ, save_plots=true)
+plot_ctmc_multi_traj_heatmap(N, S1_arr, longtime_heatmap_simulation_filename, save_plots=true)
+
+# Plot multiple CTMC simulations with absoribing states
+println("Plotting multiple ctmc simulation with absorbing states...")
+longtime_heatmap_simulation_filename = generate_filename(folder_name,"multiple_ctmc_simulation_heatmap_longtime_absorbing")
+plot_ctmc_multi_traj_heatmap(N, S2_arr, longtime_heatmap_simulation_filename, save_plots=true)
 
 # Plot invariant distribution
 println("Plotting invariant ctmc heatmap...")
 invariant_heatmap_simulation_filename = generate_filename(folder_name,"invariant_ctmc_heatmap")
-plot_ctmc_invar_distn_our_problem(Q_opt, N, invariant_heatmap_simulation_filename, λ, save_plots=true)
-
-# Plot multiple CTMC simulations with absorbing states
-println("Plotting multiple ctmc simulation with absorbing states...")
-T = 7000.0
-longtime_heatmap_simulation_filename = generate_filename(folder_name,"multiple_ctmc_simulation_heatmap_longtime_absorbing")
-plot_ctmc_our_problem_multi(Q_opt_absorbing, initial_state, T, N, num_simulations, longtime_heatmap_simulation_filename, λ, save_plots=true)
-
-# Plot invariant distribution with absorbing states
-println("Plotting invariant ctmc heatmap with absorbing states...")
-invariant_heatmap_simulation_filename = generate_filename(folder_name,"invariant_ctmc_heatmap_absorbing") 
-plot_ctmc_invar_distn_our_problem(Q_opt_absorbing, N, invariant_heatmap_simulation_filename, λ, save_plots=true)
+plot_ctmc_invar_distn_heatmap(Q_opt, N, invariant_heatmap_simulation_filename, λ, save_plots=true)
 
 # Print final optimal solution details
 # Print to console
