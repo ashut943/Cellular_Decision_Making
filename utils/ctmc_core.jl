@@ -42,28 +42,3 @@ function hitting_time(Q,targetstates_good,targetstates_bad,startstates,λ)
     end
     return [T[start_state] for start_state ∈ startstates]
 end
-
-function simulate_mul_ctmc(Q::Array{Float64,2}, initial_state::Int, T::Float64, num_paths::Int, num_time_points::Int)
-    num_states = size(Q, 1)
-    time_points = range(0, T, length=num_time_points)
-    #here to make plotting feasible
-    state_counts = zeros(Float64, num_states, num_time_points)
-    
-    for path in 1:num_paths
-        times, states = simulate_ctmc(Q, initial_state, T)
-        idx = 1
-        for t_idx in 1:num_time_points
-            t = time_points[t_idx]
-            while idx < length(times) && times[idx+1] <= t
-                #essentially check if the current checkpoint time is before or after the latest transition
-                idx += 1
-            end
-            state = states[idx]
-            state_counts[state, t_idx] += 1
-        end
-    end
-
-    state_probs = state_counts / num_paths
-
-    return time_points, state_probs
-end
