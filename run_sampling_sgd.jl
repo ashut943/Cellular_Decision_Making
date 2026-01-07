@@ -54,26 +54,14 @@ log_msg("Log file: $logfile_name")
 #==============================================================================#
 
 AdjMat = zeros(Int, M, M)
-# Cell 1 is the center hub connected to all
+
 AdjMat[1,2] = 1; AdjMat[1,3] = 1; AdjMat[1,4] = 1
 AdjMat[1,5] = 1; AdjMat[1,6] = 1; AdjMat[1,7] = 1
-
-# Cell 2: connected to 1, 3, 7
 AdjMat[2,1] = 1; AdjMat[2,3] = 1; AdjMat[2,7] = 1
-
-# Cell 3: connected to 1, 2, 4
 AdjMat[3,1] = 1; AdjMat[3,2] = 1; AdjMat[3,4] = 1
-
-# Cell 4: connected to 1, 3, 5
 AdjMat[4,1] = 1; AdjMat[4,3] = 1; AdjMat[4,5] = 1
-
-# Cell 5: connected to 1, 4, 6
 AdjMat[5,1] = 1; AdjMat[5,4] = 1; AdjMat[5,6] = 1
-
-# Cell 6: connected to 1, 5, 7
 AdjMat[6,1] = 1; AdjMat[6,5] = 1; AdjMat[6,7] = 1
-
-# Cell 7: connected to 1, 2, 6
 AdjMat[7,1] = 1; AdjMat[7,2] = 1; AdjMat[7,6] = 1
 
 T_horizon = 300.0
