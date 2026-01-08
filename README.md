@@ -59,27 +59,28 @@ The following table describes which script is used to create the different plots
 
 | Script | Figures |
 | ------ | ---------------- |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_simple.jl` | Fig. 3 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_conditioned.jl` | Fig. 4 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_error_sweep.jl` | Fig. 3 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_high_error.jl` | Fig. 7 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_low_error.jl` | Fig. 7 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one.jl` | Fig. 3 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_conditioned.jl` | Fig. 4 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_error_sweep.jl` | Fig. 3 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_high_error.jl` | Fig. 7 |
-| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_low_error.jl` | Fig. 7 |
 | `three_cell_scripts/opti_scripts/three_cell_arrhenius_landscape_plots.jl` | Fig. 2 |
 | `three_cell_scripts/opti_scripts/three_cell_pareto_front_with_samples_fig_2.jl` | Fig. 2, S1 |
+| `three_cell_scripts/opti_scripts/threecell_plotting_global.jl` | Fig. 2, 6|
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple.jl` | Fig. 3 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_error_sweep.jl` | Fig. 3 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one.jl` | Fig. 3 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_error_sweep.jl` | Fig. 3 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_conditioned.jl` | Fig. 4 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_conditioned.jl` | Fig. 4 |
 | `three_cell_scripts/opti_scripts/threecell_all_instantaneous_mi_plot_maker.jl` | Fig. 5 |
 | `three_cell_scripts/opti_scripts/threecell_plotting_global.jl` | Fig. 2, 6|
 | `three_cell_scripts/opti_scripts/threecell_plotting_local_strategy.jl` | Fig. 6, S5 |
 | `three_cell_scripts/opti_scripts/threecell_plotting_local_strategy_thrice.jl` | Fig. 6|
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_high_error.jl` | Fig. 7 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_low_error.jl` | Fig. 7 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_high_error.jl` | Fig. 7 |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_low_error.jl` | Fig. 7 |
+| `experimental_data_analysis/mutual_information_calculation.ipynb` | Fig. 8, S9, S10 |
+| `seven_cell_scripts/seven_cell_pareto_front_si_fig.jl` | Fig. S1 |
+| `seven_cell_scripts/seven_cell_arrhenius_landscape_plots.jl` | Fig. S2 |
+| `seven_cell_scripts/seven_cell_simulations_fig_si.jl` | Fig. S2 |
 | `three_cell_scripts/SI_fig_final_state_mi/final_state_mi_single.py` | Fig. S3 |
 | `three_cell_scripts/SI_fig_final_state_mi/final_state_mi_two_v_one.py` | Fig. S4 |
-| `seven_cell_scripts/seven_cell_arrhenius_landscape_plots.jl` | Fig. S2 |
-| `seven_cell_scripts/seven_cell_pareto_front_si_fig.jl` | Fig. S1 |
-| `seven_cell_scripts/seven_cell_simulations_fig_si.jl` | Fig. S2 |
-| `experimental_data_analysis/mutual_information_calculation.ipynb` | Fig. 8, S9, S10 |
 
 ---
