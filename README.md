@@ -20,8 +20,6 @@ The relevant data for the project can be found (here?). This contains the proces
 
 ## Prerequisites
 
-### Julia (tested on 1.11.2)
-
 - **Julia** (tested on v1.11.2)
 - **Python** (tested on )
 - **NPEET** for mutual information calculation (installled locally, see [https://github.com/gregversteeg/NPEET](https://github.com/gregversteeg/NPEET))
@@ -54,8 +52,26 @@ The relevant data for the project can be found (here?). This contains the proces
 ```
 ---
 
+## Computational scripts description
+The following table describes the purpose of the different example calculation scripts.
+
+| Script | Description |
+| ------ | ----------- |
+| `three_cell_scripts/opti_scripts/three_cell_optimisation.jl` | To find optimal solution (with a single initialiation) for the three cell system, using interior point method. |
+| `three_cell_scripts/opti_scripts/three_cell_optimisation_multiple_warm_starts.jl` | To find optimal solution with warm starts for the three cell syste,, using interior point method. |
+| `three_cell_scripts/opti_scripts/three_cell_optimisation_local.jl` | To search for the ``greedy'' solution for the three cell system, using interior point method. |
+| `three_cell_scripts/opti_scripts/three_cell_run_sampling_sgd.jl` | To find optimal solution for the three cell system using the sampling-based approximate method. |
+| `three_cell_scripts/opti_scripts/three_cell_sampling_phase_space.jl` | To sample the relevant manifold, finding and saving the sub-optimal solutions for the three-cell system. |
+| `three_cell_scripts/opti_scripts/three_cell_getting_conditioned_rate_matrix.jl` | To create and save a new three cell system after Doob transformation so that the markov process always sucessfuly patterns and cell three is expressed. |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple.jl` | To compute dynamic information metrics for information transfer between cell 1 and cell 3 in a three cell system for a fixed error rate. |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_simple_error_sweep.jl` | To compute dynamic information metrics for information transfer between cell 1 and cell 3 in a three cell system for different error rates. |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one.jl` | To compute dynamic information metrics for information transfer between cell 3 and the tuple (cell 1, cell 2) in a three cell system for a fixed error rate. |
+| `three_cell_scripts/info_calc_scripts/three_cell_info_two_v_one_error_sweep.jl` | To compute dynamic information metrics for information transfer between cell 3 and the tuple (cell 1, cell 2) in a three cell system for different error rates. |
+| `seven_cell_scripts/seven_cell_run_sampling_sgd.jl` | To find optimal solution for the seven cell system using the sampling-based approximate method. |
+
+---
 ## Plotting Scripts
-The following table describes which script is used to create the different plots for the various relevant figures in the paper.
+The following table describes which script is used to create the different plots for the various relevant figures in the paper. A lot of these scripts are also doing computations as well, and this is described in the relevant script.
 
 | Script | Figures |
 | ------ | ---------------- |
