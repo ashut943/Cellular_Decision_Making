@@ -25,7 +25,7 @@ The relevant data for the project can be found ([10.5281/zenodo.18190120](https:
 - **NPEET** for mutual information calculation (installled locally, see [https://github.com/gregversteeg/NPEET](https://github.com/gregversteeg/NPEET))
 - **JuMP** and **Ipopt** for finding optimal strategies for patterning using interior point method
 - **DifferentialEquations.jl** for solving ODE/SDE
-- **CelularDecisions.jl** (installed locally; provides core data structures for the three cell system computations; can be found at [https://github.com/Dom-Skinner/CellularDecisions](https://github.com/Dom-Skinner/CellularDecisions))
+- **CellularDecisions.jl** (installed locally; provides core data structures for the three cell system computations; can be found at [https://github.com/Dom-Skinner/CellularDecisions](https://github.com/Dom-Skinner/CellularDecisions))
 - **Main Python dependencies** (see `requirements.txt`):  
   - numpy  
   - scipy  
