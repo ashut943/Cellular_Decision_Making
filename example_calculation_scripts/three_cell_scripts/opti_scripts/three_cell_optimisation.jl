@@ -3,16 +3,18 @@
 #Actual optimizatoin is done by using warm starts:
 # - begin with 100 random initializations and running the solver for 10^4 iterations
 # - collect all the solutions to which the optimizer converged, and run the solver again, for longer number of iterations
-# - the best solution is the one witht the lowest mean hitting time value
+# - It often turns out to be effective to do also use the solutions from nearby error values as an initial guess
+# - the best solution is the one with the lowest mean hitting time value
 # - We also manually, do further optimization by running the solver with the upper bound constraint on the hitting time
+# Overall, it turns out that at least 2 sweeps (forward and backwards) along the error axis is necessary to get a reliable set of solutions
 
 using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO, LaTeXStrings
 using Measures
 using Revise
 using CellularDecisions
 
-include("mult_cell/mult_cell.jl")
-include("utils/utils.jl")
+include("../../../mult_cell/mult_cell.jl")
+include("../../../utils/utils.jl")
 
 #--------------------------------
 #++++++++++++++++++++++++++++++++
@@ -99,11 +101,11 @@ max_time=13.0 # maximum hitting time
 #--------------------------------
 # Create output directory
 error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
-base_folder = joinpath(dirname(@__DIR__), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
-folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s_uh_huh", N, error_str))
+base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s", N, error_str))
 mkpath(folder_name)
 
-folder_name_for_plots="./plots/three_cell_results/"*type_of_boundary_condition*"/"*"N_$(N)_error_fix_$(error_str)"*"_uhuhuh_bruh"
+folder_name_for_plots = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)")
 mkpath(folder_name_for_plots)
 #--------------------------------
 #++++++++++++++++++++++++++++++++

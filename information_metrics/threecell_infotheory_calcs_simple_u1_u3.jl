@@ -13,8 +13,8 @@ using SharedArrays
 
 include("../mult_cell/mult_cell.jl")
 include("../utils/utils.jl")
-include("../information_metrics/infotheoryfuncs.jl")
-include("../three_cell_experiments/coarse_graining_u1_u2_u3/three_cell_coarse_graining_simple_x_z.jl")
+include("infotheoryfuncs.jl")
+include("../three_cell_coarsegraining/three_cell_coarse_graining_simple_x_z.jl")
 
 function calculate_information_metrics_multiple_trajectories(threecell_system, starting_state_tuple; T=50.0, initial_state=1, num_simulations=100, num_timesteps=1000)
     # Simulates multiple CTMC trajectories and computes path-wise transfer entropies and mutual information for each

@@ -93,11 +93,11 @@ type_of_boundary_condition = "boundary_2"  # refer to boundary condition discuss
 #--------------------------------
 # Create output directory
 error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
-base_folder = joinpath(dirname(@__DIR__), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
 folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s", N, error_str))
 mkpath(folder_name)
 
-folder_name_for_plots="./plots/three_cell_results/"*type_of_boundary_condition*"/"*"N_$(N)_error_fix_$(error_str)"*"_local"
+folder_name_for_plots = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_local")
 mkpath(folder_name_for_plots)
 #--------------------------------
 #++++++++++++++++++++++++++++++++

@@ -16,25 +16,37 @@ using ExponentialUtilities
 using Dates
 using JSON
 
-include("utils/utils.jl") 
-include("mult_cell/mult_cell.jl")
-include("sampling_based_optimization/sampling_based_opti.jl")
+include("../../utils/utils.jl") 
+include("../../mult_cell/mult_cell.jl")
+include("../../sampling_based_optimization/sampling_based_opti.jl")
 
-#==============================================================================#
-#                           CONFIGURATION                                      #
-#==============================================================================#
+#--------------------------------
+# Configuration
+#--------------------------------
 
 N = 6  # Number of states - 1
 M = 7  # Number of cells
 h_error = 0.02  # Target error rate
 initial_state_array = ((1,0), (1,0), (1,0), (1,0), (1,0), (1,0), (1,0))
-type_of_boundary_condition = "boundary_2"
+type_of_boundary_condition = "boundary_2" #same boundary condition as in the three cell system, as in the paper.
 
-#==============================================================================#
-#                           LOGGING SETUP                                      #
-#==============================================================================#
+#--------------------------------
+# Output directories
+#--------------------------------
 
-logfile_name = "only_center_sgd_N$(N)_M$(M)_he$(replace(string(h_error), "." => "p"))_$(Dates.format(now(), "yyyymmdd_HHMMSS")).log"
+error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
+base_folder = joinpath(dirname(dirname(@__DIR__)), "experiments", "seven_cell_results", "SGD_results_"*type_of_boundary_condition)
+folder_name = joinpath(base_folder, @sprintf("SGD_results_N_%d_M_%d_error_fix_%s", N, M, error_str))
+mkpath(folder_name)
+
+folder_name_for_plots = joinpath(dirname(dirname(@__DIR__)), "plots", "seven_cell_results", type_of_boundary_condition, "N_$(N)_M_$(M)_error_fix_$(error_str)")
+mkpath(folder_name_for_plots)
+
+#--------------------------------
+# Logging
+#--------------------------------
+
+logfile_name = joinpath(folder_name, "only_center_sgd_N$(N)_M$(M)_he$(replace(string(h_error), "." => "p"))_$(Dates.format(now(), "yyyymmdd_HHMMSS")).log")
 logfile = open(logfile_name, "w")
 
 function log_msg(msg)
@@ -49,37 +61,53 @@ log_msg("=== Starting SGD optimization ===")
 log_msg("N = $N, M = $M, h_error = $h_error")
 log_msg("Log file: $logfile_name")
 
-#==============================================================================#
-#                           ADJACENCY MATRIX                                   #
-#==============================================================================#
+#--------------------------------
+# Adjacency matrix (7-cell hexagonal ring with center)
+#--------------------------------
 
 AdjMat = zeros(Int, M, M)
 
-AdjMat[1,2] = 1; AdjMat[1,3] = 1; AdjMat[1,4] = 1
-AdjMat[1,5] = 1; AdjMat[1,6] = 1; AdjMat[1,7] = 1
-AdjMat[2,1] = 1; AdjMat[2,3] = 1; AdjMat[2,7] = 1
-AdjMat[3,1] = 1; AdjMat[3,2] = 1; AdjMat[3,4] = 1
-AdjMat[4,1] = 1; AdjMat[4,3] = 1; AdjMat[4,5] = 1
-AdjMat[5,1] = 1; AdjMat[5,4] = 1; AdjMat[5,6] = 1
-AdjMat[6,1] = 1; AdjMat[6,5] = 1; AdjMat[6,7] = 1
-AdjMat[7,1] = 1; AdjMat[7,2] = 1; AdjMat[7,6] = 1
+AdjMat[1,2] = 1
+AdjMat[1,3] = 1
+AdjMat[1,4] = 1
+AdjMat[1,5] = 1
+AdjMat[1,6] = 1
+AdjMat[1,7] = 1
+
+AdjMat[2,1] = 1
+AdjMat[2,3] = 1
+AdjMat[2,7] = 1
+
+AdjMat[3,1] = 1
+AdjMat[3,2] = 1
+AdjMat[3,4] = 1
+
+AdjMat[4,1] = 1
+AdjMat[4,3] = 1
+AdjMat[4,5] = 1
+
+AdjMat[5,1] = 1
+AdjMat[5,4] = 1
+AdjMat[5,6] = 1
+
+AdjMat[6,1] = 1
+AdjMat[6,5] = 1
+AdjMat[6,7] = 1
+
+AdjMat[7,1] = 1
+AdjMat[7,2] = 1
+AdjMat[7,6] = 1
 
 T_horizon = 300.0
 log_msg("AdjMat: $AdjMat")
 log_msg("T_horizon: $T_horizon")
 
-#==============================================================================#
-#                           TERMINAL STATES                                    #
-#==============================================================================#
+#--------------------------------
+# Terminal states
+#--------------------------------
 
-TG_proper = [
-    (N, 0, 0, 0, 0, 0, 0),
-    (0, N, 0, 0, N, 0, 0),
-    (0, 0, N, 0, 0, N, 0),
-    (0, 0, 0, N, 0, 0, N),
-    (0, N, 0, N, 0, N, 0),
-    (0, 0, N, 0, N, 0, N)
-]
+TG_proper = [(N,0,0,0,0,0,0),(0,N,0,0,N,0,0), (0,0,N,0,0,N,0), (0,0,0,N,0,0,N), (0,N,0,N,0,N,0), (0,0,N,0,N,0,N)]
+
 
 TB_proper = []
 for u_1 in [0, N]
@@ -104,11 +132,10 @@ end
 log_msg("TG_proper: $TG_proper")
 log_msg("TB_proper: $(length(TB_proper)) bad states")
 
-#==============================================================================#
-#                           INITIAL PARAMETERS                                 #
-#==============================================================================#
+#--------------------------------
+# Initial parameters
+#--------------------------------
 
-# initial parameter vector for optimization
 θ1_initial = [
     0.03267535067141225, 0.03005574245984719, 0.7424934427333019, 0.999998504619645, 0.997224474458932,
     0.0, 0.0, 0.009709612682650784, 0.016265159707732284, 0.017488701382889396,
@@ -121,9 +148,9 @@ log_msg("θ0 length: $(length(θ1_initial))")
 log_msg("Expected length (5N-2): $(5*N - 2)")
 log_msg("θ1_initial: $θ1_initial")
 
-#==============================================================================#
-#                           INITIAL VALIDATION                                 #
-#==============================================================================#
+#--------------------------------
+# Initial validation
+#--------------------------------
 
 log_msg("\n================================================")
 log_msg("Starting INITIAL VALIDATION")
@@ -136,9 +163,9 @@ mean_T_init, mean_bad_init = validate_params(
 log_msg("Initial validation - mean terminal time: $mean_T_init")
 log_msg("Initial validation - mean is_bad: $mean_bad_init")
 
-#==============================================================================#
-#                           WARM START PHASE                                   #
-#==============================================================================#
+#--------------------------------
+# Warm start phase
+#--------------------------------
 
 log_msg("\n================================================")
 log_msg("Starting WARM START phase")
@@ -175,9 +202,9 @@ log_msg("\n================================================")
 log_msg("WARM START completed")
 log_msg("================================================")
 
-#==============================================================================#
-#                           WARM START VALIDATION                              #
-#==============================================================================#
+#--------------------------------
+# Warm start validation
+#--------------------------------
 
 log_msg("\n================================================")
 log_msg("Starting WARMUP VALIDATION")
@@ -191,9 +218,9 @@ log_msg("WARMUP validation - mean terminal time: $mean_T_warm")
 log_msg("WARMUP validation - mean is_bad: $mean_bad_warm")
 log_msg("θ_star_warm: $θ_star_warm")
 
-#==============================================================================#
-#                           MAIN OPTIMIZATION                                  #
-#==============================================================================#
+#--------------------------------
+# Main SGD optimization
+#--------------------------------
 
 log_msg("\n================================================")
 log_msg("Starting MAIN SGD")
@@ -226,9 +253,9 @@ log_msg("================================================")
     log_fn=log_msg
 )
 
-#==============================================================================#
-#                           FINAL VALIDATION                                   #
-#==============================================================================#
+#--------------------------------
+# Final validation
+#--------------------------------
 
 log_msg("\n================================================")
 log_msg("Starting FINAL VALIDATION")
@@ -252,9 +279,9 @@ log_msg("================================================")
 
 close(logfile)
 
-#==============================================================================#
-#                           PLOTTING & SAVING RESULTS                          #
-#==============================================================================#
+#--------------------------------
+# Plotting & saving results
+#--------------------------------
 
 iters = 1:length(logs.T_hist)
 
@@ -279,34 +306,32 @@ for (idx_range, label) in ranges_and_labels
     # Terminal Time
     p1 = plot(iters[idx_range], logs.T_hist[idx_range], xlabel="Iteration", ylabel="T̄", label="T̄",
         title="Mean Terminal Time ($label)", size=(plot_width, plot_height))
-    savefig(p1, "$(base_name)_logs_Tmean_$label.png")
+    savefig(p1, joinpath(folder_name_for_plots, "$(base_name)_logs_Tmean_$label.png"))
 
     # Bad Probability
     p2 = plot(iters[idx_range], logs.b_hist[idx_range], xlabel="Iteration", ylabel="b̄", label="b̄",
         title="Mean Bad Probability ($label)", size=(plot_width, plot_height), yrange=(0,1))
-    savefig(p2, "$(base_name)_logs_BadProb_$label.png")
+    savefig(p2, joinpath(folder_name_for_plots, "$(base_name)_logs_BadProb_$label.png"))
 
     # Lambda
     p3 = plot(iters[idx_range], logs.λ_hist[idx_range], xlabel="Iteration", ylabel="λ", label="λ",
         title="Dual Variable (λ) ($label)", size=(plot_width, plot_height))
-    savefig(p3, "$(base_name)_logs_Lambda_$label.png")
+    savefig(p3, joinpath(folder_name_for_plots, "$(base_name)_logs_Lambda_$label.png"))
 
     # Gradient Norm
     p4 = plot(iters[idx_range], logs.gnorm[idx_range], xlabel="Iteration", ylabel="‖gθ‖₂", label="‖gθ‖₂",
         title="Gradient Norm ($label)", size=(plot_width, plot_height))
-    savefig(p4, "$(base_name)_logs_GNorm_$label.png")
+    savefig(p4, joinpath(folder_name_for_plots, "$(base_name)_logs_GNorm_$label.png"))
 
     # Augmented Loss
     p5 = plot(iters[idx_range], logs.Loss_hist[idx_range], xlabel="Iteration", ylabel="Loss", label="Loss",
         title="Augmented Loss ($label)", size=(plot_width, plot_height))
-    savefig(p5, "$(base_name)_logs_Loss_$label.png")
+    savefig(p5, joinpath(folder_name_for_plots, "$(base_name)_logs_Loss_$label.png"))
 end
-
-#==============================================================================#
 
 println("Saving optimization results...")
 
-open("$(base_name)_final_results.txt", "w") do io
+open(joinpath(folder_name, "$(base_name)_final_results.txt"), "w") do io
     println(io, "CTMC Optimization Results")
     println(io, "========================")
     println(io, "")
@@ -334,16 +359,17 @@ logdict = Dict(
     "stopped_early" => get(logs, :stopped_early, false),
     "iter_last"     => get(logs, :iter_last, length(logs.T_hist))
 )
-open("$(base_name)_logs.json", "w") do io
+open(joinpath(folder_name, "$(base_name)_logs.json"), "w") do io
     JSON.print(io, logdict)
 end
 
-open("$(base_name)_theta_star.txt", "w") do io
+open(joinpath(folder_name, "$(base_name)_theta_star.txt"), "w") do io
     println(io, join(θ_star, ", "))
 end
-open("$(base_name)_lambda_star.txt", "w") do io
+open(joinpath(folder_name, "$(base_name)_lambda_star.txt"), "w") do io
     println(io, @sprintf("%.12f", lambda_star))
 end
 
-println("Results saved: $(base_name)_final_results.txt, $(base_name)_theta_star.txt, $(base_name)_lambda_star.txt, $(base_name)_logs.json")
+println("Results saved to experiments folder: $folder_name")
+println("Plots saved to plots folder: $folder_name_for_plots")
 

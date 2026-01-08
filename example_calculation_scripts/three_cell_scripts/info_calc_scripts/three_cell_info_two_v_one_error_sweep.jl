@@ -1,5 +1,5 @@
-#Example script for calculating the infromation metrics for the three cell system, in particular between the cells 1 and 2 (u1 and u2)
-
+#Example script for calculating the information metrics for the three cell system, in particular between the cells 3 and the tuple of cell 1 and 2 (together) (u3 and (u1,u2))
+#This is the example script for the error sweep calculations and plots in the paper
 using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO
 using Revise
 using Plots.PlotMeasures
@@ -10,29 +10,31 @@ using Distributed
 using SharedArrays
 using JLD2
 
-include("mult_cell/mult_cell.jl")
-include("utils/utils.jl")
-include("information_metrics/infotheoryfuncs.jl")
-include("information_metrics/threecell_infotheory_calcs_simple.jl")
+include("../../../mult_cell/mult_cell.jl")
+include("../../../utils/utils.jl")
+include("../../../information_metrics/infotheoryfuncs.jl")
+include("../../../information_metrics/threecell_infotheory_calcs_two_v_one.jl")
 
 N = 6  # Number of states- 1
-T = 50.0  # Time for simulations
-num_simulations = 1000  # N number of simulations
-num_timesteps = 100 # Number of timesteps for the information metrics, i.e number of queries
+T = 100.0  # Time for simulations
+num_simulations = 10000  # N number of simulations
+num_timesteps = 2 # Number of timesteps for the information metrics, i.e number of queries. Here,
 initial_state_array = ((1,0),(1,0),(1,0))  # Initial state for simulations
 type_of_boundary_condition="boundary_2" #type of boundary condition. This is the boundary condition of the system used in the papaer
 type_of_optimisation="global" #as opposed to local optimal solution (which is the "greedy" solution in the paper)
+
+h_error_array = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 1.00]
 
 #--------------------------------
 #++++++++++++++++++++++++++++++++
 #--------------------------------
 
-final_mutual_information_array_simple=[]
-final_mutual_information_array_std_simple=[]
-final_transfer_entropy_array_xy_simple=[]
-final_transfer_entropy_array_xy_std_simple=[]
-final_transfer_entropy_array_yx_simple=[]
-final_transfer_entropy_array_yx_std_simple=[]
+final_mutual_information_array_two_v_one=[]
+final_mutual_information_array_std_two_v_one=[]
+final_transfer_entropy_array_xy_two_v_one=[]
+final_transfer_entropy_array_xy_std_two_v_one=[]
+final_transfer_entropy_array_yx_two_v_one=[]
+final_transfer_entropy_array_yx_std_two_v_one=[]
 
 
 for h_error in h_error_array
@@ -41,12 +43,13 @@ for h_error in h_error_array
 
     # Create output directory
     error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
-    base_folder = joinpath(dirname(@__DIR__), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+    base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
     folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s", N, error_str))
     threecell_system_filename = generate_filename(folder_name,"threecell_system_"*type_of_optimisation)
     threecell_system = CellularDecisions.load(threecell_system_filename)
-    plots_folder="./plots/three_cell_results/"*type_of_boundary_condition*"/"*"N_$(N)_error_fix_$(error_str)"*"_"*type_of_optimisation*"/"*string(num_simulations)*"_"*string(num_timesteps)*"_simple/"
-    mkpath(plots_folder)
+
+    # plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_simple")
+    # mkpath(plots_folder)
 
     #--------------------------------
     #++++++++++++++++++++++++++++++++
@@ -80,16 +83,16 @@ for h_error in h_error_array
     dict_info_unconditioned_global=calc_overall_info_metrics(results_dict_global, num_simulations)
 
     #save the dictionaries to a file
-    @save folder_name*"/results_dict_simple.jld2" results_dict_global
-    @save folder_name*"/dict_info_unconditioned_simple.jld2" dict_info_unconditioned_global
+    @save folder_name*"/results_dict_two_v_one_error_sweep.jld2" results_dict_global
+    @save folder_name*"/dict_info_unconditioned_two_v_one_error_sweep.jld2" dict_info_unconditioned_global
 
     #--------------------------------
     #++++++++++++++++++++++++++++++++
     #--------------------------------
 
-    # plotting the results
-    file_name=string(N)*"_"*string(h_error)*"_"*type_of_optimisation*"_"*string("unconditioned")
-    plot_info_metrics(results_dict_global, dict_info_unconditioned_global, file_name, plots_folder)
+    # # plotting the results
+    # file_name=string(N)*"_"*string(h_error)*"_"*type_of_optimisation*"_"*string("unconditioned")
+    # plot_info_metrics(results_dict_global, dict_info_unconditioned_global, file_name, plots_folder)
 
     #--------------------------------
     #++++++++++++++++++++++++++++++++
@@ -120,10 +123,16 @@ for h_error in h_error_array
     println("final_transfer_entropy_yx_std_curr: ", final_transfer_entropy_yx_std_curr)
 
     #appending the results to the arrays
-    push!(final_mutual_information_array_simple, final_mutual_info_curr)
-    push!(final_mutual_information_array_std_simple, final_mutual_info_std_curr)
-    push!(final_transfer_entropy_array_xy_simple, final_transfer_entropy_xy_curr)
-    push!(final_transfer_entropy_array_xy_std_simple, final_transfer_entropy_xy_std_curr)
-    push!(final_transfer_entropy_array_yx_simple, final_transfer_entropy_yx_curr)
-    push!(final_transfer_entropy_array_yx_std_simple, final_transfer_entropy_yx_std_curr)
+    push!(final_mutual_information_array_two_v_one, final_mutual_info_curr)
+    push!(final_mutual_information_array_std_two_v_one, final_mutual_info_std_curr)
+    push!(final_transfer_entropy_array_xy_two_v_one, final_transfer_entropy_xy_curr)
+    push!(final_transfer_entropy_array_xy_std_two_v_one, final_transfer_entropy_xy_std_curr)
+    push!(final_transfer_entropy_array_yx_two_v_one, final_transfer_entropy_yx_curr)
+    push!(final_transfer_entropy_array_yx_std_two_v_one, final_transfer_entropy_yx_std_curr)
 end
+
+base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+folder_name = joinpath(base_folder, @sprintf("two_v_one_error_sweep"))
+mkpath(folder_name)
+@save joinpath(folder_name, "two_v_one_error_sweep.jld2") h_error_array final_mutual_information_array_two_v_one final_mutual_information_array_std_two_v_one final_transfer_entropy_array_xy_two_v_one final_transfer_entropy_array_xy_std_two_v_one final_transfer_entropy_array_yx_two_v_one final_transfer_entropy_array_yx_std_two_v_one
+
