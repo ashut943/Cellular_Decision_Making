@@ -14,7 +14,7 @@ This repository contains code for analyzing collective cellular patterning throu
 - **Information-theoretic calculations** for quantifying information theorey metrics for a continuous time markov chain
 - **Experimental data analysis** for processing and calculating mutual information for microscopy data in ([Phan et al (2024)](https://doi.org/10.1242/dev.203165))
 
-The relevant data for the project can be found (here?). This contains the processed experimental data for mutual information calculation. It also contains results from the minimal model exploration, particularly the optimied strategies as almost all of the calculations were performed the MIT Engaging cluster -- the saved data means you don't need to repeat this computation.
+The relevant data for the project can be found ([10.5281/zenodo.18189942](10.5281/zenodo.18189942)). This contains the processed experimental data for mutual information calculation. It also contains results from the minimal model exploration, particularly the optimied strategies as almost all of the calculations were performed the MIT Engaging cluster -- the saved data means you don't need to repeat this computation.
 
 ---
 
