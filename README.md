@@ -31,9 +31,7 @@ This repository contains code for analyzing collective cellular patterning throu
   - scipy  
   - pandas  
   - sympy  
-  - matplotlib  
-  - napari  
-  - scikit-image  
+  - matplotlib
 
 ---
 

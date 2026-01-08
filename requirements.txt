@@ -12,10 +12,6 @@ sympy>=1.9
 # Plotting and visualization
 matplotlib>=3.4.0
 
-# Image processing and analysis
-scikit-image>=0.18.0
-napari>=0.4.0
-
 # Data storage
 h5py>=3.0.0
 
