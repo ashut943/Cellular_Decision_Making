@@ -126,7 +126,7 @@ for (K_hill_idx, K_hill) in enumerate(K_hill_array)
     end
 end
 
-base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "results", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
 folder_name = joinpath(base_folder, @sprintf("sampled_phase_space"))
 mkpath(folder_name)
 

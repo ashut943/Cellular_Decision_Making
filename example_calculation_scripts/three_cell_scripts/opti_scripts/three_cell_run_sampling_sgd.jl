@@ -35,7 +35,7 @@ type_of_boundary_condition = "boundary_2" #same boundary condition as in the thr
 #--------------------------------
 
 error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
-base_folder = joinpath(dirname(dirname(@__DIR__)), "experiments", "three_cell_results", "SGD_results_"*type_of_boundary_condition)
+base_folder = joinpath(dirname(dirname(@__DIR__)), "results", "three_cell_results", "SGD_results_"*type_of_boundary_condition)
 folder_name = joinpath(base_folder, @sprintf("SGD_results_N_%d_M_%d_error_fix_%s", N, M, error_str))
 mkpath(folder_name)
 
@@ -338,6 +338,6 @@ open(joinpath(folder_name, "$(base_name)_lambda_star.txt"), "w") do io
     println(io, @sprintf("%.12f", lambda_star))
 end
 
-println("Results saved to experiments folder: $folder_name")
+println("Results saved to results folder: $folder_name")
 println("Plots saved to plots folder: $folder_name_for_plots")
 

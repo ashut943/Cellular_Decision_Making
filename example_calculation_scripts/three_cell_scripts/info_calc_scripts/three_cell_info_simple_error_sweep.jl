@@ -42,7 +42,7 @@ for h_error in h_error_array
 
     # Create output directory
     error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
-    base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+    base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "results", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
     folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s", N, error_str))
     threecell_system_filename = generate_filename(folder_name,"threecell_system_"*type_of_optimisation)
     threecell_system = CellularDecisions.load(threecell_system_filename)
@@ -130,7 +130,7 @@ for h_error in h_error_array
     push!(final_transfer_entropy_array_yx_std_simple, final_transfer_entropy_yx_std_curr)
 end
 
-base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "experiments", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
+base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "results", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
 folder_name = joinpath(base_folder, @sprintf("simple_error_sweep"))
 mkpath(folder_name)
 @save joinpath(folder_name, "simple_error_sweep.jld2") h_error_array final_mutual_information_array_simple final_mutual_information_array_std_simple final_transfer_entropy_array_xy_simple final_transfer_entropy_array_xy_std_simple final_transfer_entropy_array_yx_simple final_transfer_entropy_array_yx_std_simple

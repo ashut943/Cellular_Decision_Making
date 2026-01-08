@@ -2,4 +2,5 @@
 Manifest.toml
 plots/
 old/
-experiments/
+results/
+processed_experiments/
