@@ -43,11 +43,11 @@ for h_error in h_error_array
     # Create output directory
     error_str = replace(string(round(h_error*100, digits=1)), "." => "_")
     base_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "results", "three_cell_results", "Interior_point_method_results_"*type_of_boundary_condition)
-    folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_N_%d_error_fix_%s", N, error_str))
+    folder_name = joinpath(base_folder, @sprintf("Interior_Point_Method_results_high_info_N_%d_error_fix_%s", N, error_str))
     threecell_system_filename = generate_filename(folder_name,"threecell_system_"*type_of_optimisation)
     threecell_system = CellularDecisions.load(threecell_system_filename)
 
-    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_two_v_one")
+    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_high_info_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_two_v_one")
     mkpath(plots_folder)
 
     #--------------------------------

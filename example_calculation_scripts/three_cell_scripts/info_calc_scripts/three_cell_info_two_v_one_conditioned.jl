@@ -21,7 +21,7 @@ num_simulations = 10000  # N number of simulations
 num_timesteps = 100 # Number of timesteps for the information metrics, i.e number of queries
 initial_state_array = ((1,0),(1,0),(1,0))  # Initial state for simulations
 type_of_boundary_condition="boundary_2" #type of boundary condition. This is the boundary condition of the system used in the papaer
-type_of_optimisation="global" #as opposed to local optimal solution (which is the "greedy" solution in the paper)
+type_of_optimisation="global_reweighted_cell_3_wins" #as opposed to local optimal solution (which is the "greedy" solution in the paper)
 
 h_error_array = [0.02]
 #--------------------------------
@@ -47,7 +47,7 @@ for h_error in h_error_array
     threecell_system_filename = generate_filename(folder_name,"threecell_system_"*type_of_optimisation)
     threecell_system = CellularDecisions.load(threecell_system_filename)
 
-    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_two_v_one")
+    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_two_v_one_reweighted_cell_3_wins")
     mkpath(plots_folder)
 
     #--------------------------------

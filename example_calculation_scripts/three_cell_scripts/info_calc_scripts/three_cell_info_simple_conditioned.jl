@@ -1,4 +1,4 @@
-#Example script for calculating the information metrics for the three cell system, in particular between the cells 3 and the tuple of cell 1 and 2 (together) (u3 and (u1,u2))
+#Example script for calculating the information metrics for the three cell system, in particular between the cells 1 and 2 (u1 and u2)
 
 using JuMP, Ipopt, Plots, Printf, LinearAlgebra, SCS, COSMO, Distributions, LightGraphs, FileIO, VideoIO
 using Revise
@@ -13,7 +13,7 @@ using JLD2
 include("../../../mult_cell/mult_cell.jl")
 include("../../../utils/utils.jl")
 include("../../../information_metrics/infotheoryfuncs.jl")
-include("../../../information_metrics/threecell_infotheory_calcs_two_v_one.jl")
+include("../../../information_metrics/threecell_infotheory_calcs_simple.jl")
 
 N = 6  # Number of states- 1
 T = 50.0  # Time for simulations
@@ -21,19 +21,19 @@ num_simulations = 10000  # N number of simulations
 num_timesteps = 100 # Number of timesteps for the information metrics, i.e number of queries
 initial_state_array = ((1,0),(1,0),(1,0))  # Initial state for simulations
 type_of_boundary_condition="boundary_2" #type of boundary condition. This is the boundary condition of the system used in the papaer
-type_of_optimisation="global" #as opposed to local optimal solution (which is the "greedy" solution in the paper)
+type_of_optimisation="global_reweighted_cell_3_wins" #as opposed to local optimal solution (which is the "greedy" solution in the paper)
 
 h_error_array = [0.02]
 #--------------------------------
 #++++++++++++++++++++++++++++++++
 #--------------------------------
 
-final_mutual_information_array_two_v_one=[]
-final_mutual_information_array_std_two_v_one=[]
-final_transfer_entropy_array_xy_two_v_one=[]
-final_transfer_entropy_array_xy_std_two_v_one=[]
-final_transfer_entropy_array_yx_two_v_one=[]
-final_transfer_entropy_array_yx_std_two_v_one=[]
+final_mutual_information_array_simple=[]
+final_mutual_information_array_std_simple=[]
+final_transfer_entropy_array_xy_simple=[]
+final_transfer_entropy_array_xy_std_simple=[]
+final_transfer_entropy_array_yx_simple=[]
+final_transfer_entropy_array_yx_std_simple=[]
 
 
 for h_error in h_error_array
@@ -47,7 +47,7 @@ for h_error in h_error_array
     threecell_system_filename = generate_filename(folder_name,"threecell_system_"*type_of_optimisation)
     threecell_system = CellularDecisions.load(threecell_system_filename)
 
-    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_two_v_one")
+    plots_folder = joinpath(dirname(dirname(dirname(@__DIR__))), "plots", "three_cell_results", type_of_boundary_condition, "N_$(N)_error_fix_$(error_str)_$(type_of_optimisation)", "$(num_simulations)_$(num_timesteps)_simple_reweighted_cell_3_wins")
     mkpath(plots_folder)
 
     #--------------------------------
@@ -82,8 +82,8 @@ for h_error in h_error_array
     dict_info_unconditioned_global=calc_overall_info_metrics(results_dict_global, num_simulations)
 
     #save the dictionaries to a file
-    @save folder_name*"/results_dict_two_v_one.jld2" results_dict_global
-    @save folder_name*"/dict_info_unconditioned_two_v_one.jld2" dict_info_unconditioned_global
+    @save folder_name*"/results_dict_simple.jld2" results_dict_global
+    @save folder_name*"/dict_info_unconditioned_simple.jld2" dict_info_unconditioned_global
 
     #--------------------------------
     #++++++++++++++++++++++++++++++++
@@ -122,10 +122,10 @@ for h_error in h_error_array
     println("final_transfer_entropy_yx_std_curr: ", final_transfer_entropy_yx_std_curr)
 
     #appending the results to the arrays
-    push!(final_mutual_information_array_two_v_one, final_mutual_info_curr)
-    push!(final_mutual_information_array_std_two_v_one, final_mutual_info_std_curr)
-    push!(final_transfer_entropy_array_xy_two_v_one, final_transfer_entropy_xy_curr)
-    push!(final_transfer_entropy_array_xy_std_two_v_one, final_transfer_entropy_xy_std_curr)
-    push!(final_transfer_entropy_array_yx_two_v_one, final_transfer_entropy_yx_curr)
-    push!(final_transfer_entropy_array_yx_std_two_v_one, final_transfer_entropy_yx_std_curr)
+    push!(final_mutual_information_array_simple, final_mutual_info_curr)
+    push!(final_mutual_information_array_std_simple, final_mutual_info_std_curr)
+    push!(final_transfer_entropy_array_xy_simple, final_transfer_entropy_xy_curr)
+    push!(final_transfer_entropy_array_xy_std_simple, final_transfer_entropy_xy_std_curr)
+    push!(final_transfer_entropy_array_yx_simple, final_transfer_entropy_yx_curr)
+    push!(final_transfer_entropy_array_yx_std_simple, final_transfer_entropy_yx_std_curr)
 end
