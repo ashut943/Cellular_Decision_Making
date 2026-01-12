@@ -21,7 +21,7 @@ The relevant data for the project can be found ([10.5281/zenodo.18190120](https:
 ## Prerequisites
 
 - **Julia** (tested on v1.11.2)
-- **Python** (tested on )
+- **Python** (tested on v3.13.5)
 - **NPEET** for mutual information calculation (installled locally, see [https://github.com/gregversteeg/NPEET](https://github.com/gregversteeg/NPEET))
 - **JuMP** and **Ipopt** for finding optimal strategies for patterning using interior point method
 - **DifferentialEquations.jl** for solving ODE/SDE
